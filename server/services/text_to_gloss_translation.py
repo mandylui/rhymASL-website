@@ -209,6 +209,11 @@ def process_csv(input_csv_path, output_csv_path):
 
     print(f"Gloss translation saved to {output_csv_path}")
 
+def translate_to_gloss(text: str) -> str:
+    cleaned = clean_text(text)
+    gloss = generate_asl_gloss_wo_nms(cleaned)
+    return clean_gloss(gloss)
+
 # Example usage
 # input_csv_path = "text_to_gloss_testing/50_sentences2.csv"
 # output_csv_path = "text_to_gloss_testing/50_sentences2_output_phrase.csv"

@@ -9,11 +9,13 @@ import pandas as pd
 try:
     from services.text_to_gloss_translation import translate_to_gloss as _translate_to_gloss
 except Exception:
+    print(">>> Translator loaded?", _translate_to_gloss is not None)
     _translate_to_gloss = None
 
 try:
     from services.ASLsimilarity import find_similar as _find_similar
 except Exception:
+    print(">>> Translator loaded?", _translate_to_gloss is not None)
     _find_similar = None
 
 app = FastAPI(title="rhymASL API", version="0.1.0")
