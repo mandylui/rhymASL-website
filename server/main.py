@@ -1,25 +1,19 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from pathlib import Path
-from fastapi.staticfiles import StaticFiles
-import pandas as pd
 import re
-import unicodedata
 
-# ---- Import your logic modules ----
-# Adjust function names after you confirm them in your files.
+BASE_DIR = Path(__file__).parent
+VIDEOS_DIR = BASE_DIR / "static" / "signs"
+
+# Optional: your real translator if available
+_translate_to_gloss = None
 try:
     from services.text_to_gloss_translation import translate_to_gloss as _translate_to_gloss
-except Exception:
-    print(">>> Translator loaded?", _translate_to_gloss is not None)
-    _translate_to_gloss = None
-
-try:
-    from services.ASLsimilarity import find_similar as _find_similar
-except Exception:
-    print(">>> Translator loaded?", _translate_to_gloss is not None)
-    _find_similar = None
+except Exception as e:
+    print(f">>> translate_to_gloss not loaded: {e}")
 
 app = FastAPI(title="rhymASL API", version="0.1.0")
 
@@ -31,56 +25,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATA_DIR = Path(__file__).parent / "data"
-LEX_PATH = DATA_DIR / "ASL-LEX.csv"
-LEX_ADD_PATH = DATA_DIR / "ASL-LEX_add_translation.csv"
-
-lex_df = None
-lex_add_df = None
-if LEX_PATH.exists():
-    try:
-        lex_df = pd.read_csv(LEX_PATH)
-    except Exception as e:
-        print("Failed to load ASL-LEX.csv:", e)
-if LEX_ADD_PATH.exists():
-    try:
-        lex_add_df = pd.read_csv(LEX_ADD_PATH)
-    except Exception as e:
-        print("Failed to load ASL-LEX_add_translation.csv:", e)
-
 class GlossRequest(BaseModel):
     text: str
 
-class SimilarityRequest(BaseModel):
-    query: str
+def token_to_file(token: str) -> str | None:
+    """Hard-code: map TOKEN -> L_<token>.mp4 (lowercased)."""
+    fname = f"L_{token.lower()}.mp4"
+    return fname if (VIDEOS_DIR / fname).exists() else None
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "lex_loaded": bool(lex_df is not None)}
+    return {
+        "status": "ok",
+        "gloss_fn_loaded": _translate_to_gloss is not None,
+        "videos_dir": str(VIDEOS_DIR),
+        "videos_dir_exists": VIDEOS_DIR.exists(),
+    }
 
 @app.post("/gloss")
 def gloss(req: GlossRequest):
-    if not req.text.strip():
+    txt = req.text.strip()
+    if not txt:
         raise HTTPException(status_code=400, detail="text required")
-    if _translate_to_gloss is None:
-        # Fallback placeholder
-        return {"input": req.text, "gloss": req.text.upper().replace(" ", "-")}
     try:
-        result = _translate_to_gloss(req.text)
-        return {"input": req.text, "gloss": result}
+        g = _translate_to_gloss(txt) if _translate_to_gloss else txt.upper().replace(" ", " ")
+        # tokens: split on spaces, hyphens, underscores
+        tokens = [t for t in re.split(r"[ \-\_]+", g) if t]
+        files, missing = [], []
+        for tok in tokens:
+            f = token_to_file(tok)
+            (files if f else missing).append(f or tok)
+        return {"input": txt, "gloss": g, "videos": files, "missing": missing}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/similarity")
-def similarity(req: SimilarityRequest):
-    if _find_similar is None:
-        # Safe fallback if your real function isn’t wired yet
-        sample = (lex_df.head(5).to_dict(orient="records") if lex_df is not None else [])
-        return {"query": req.query, "results": sample}
-    try:
-        result = _find_similar(req.query, lex_df, lex_add_df)
-        return {"query": req.query, "results": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-app.mount("/videos", StaticFiles(directory="ASL_LEX_MP4"), name="videos")
+# Serve static videos
+if VIDEOS_DIR.exists():
+    app.mount("/videos", StaticFiles(directory=VIDEOS_DIR), name="videos")
+    print(f">>> Serving videos from: {VIDEOS_DIR}")
+else:
+    print(f"WARNING: Videos directory not found at {VIDEOS_DIR}.")

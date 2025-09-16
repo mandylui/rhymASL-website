@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./styles.css";
 import { callGloss, callAnalyze } from "./lib/api";
 import type { GlossResp, AnalyzeResp } from "./lib/api";
+import GlossVideoPlayer from "./GlossVideoPlayer";
 
 export default function App() {
   const [text, setText] = useState("");
@@ -61,11 +62,21 @@ export default function App() {
               <div style={{margin:"4px 0 10px"}}>{gloss.input}</div>
               <div className="small">ASL Gloss</div>
               <div style={{fontWeight:800, fontSize:18}}>{gloss.gloss}</div>
+
+              {/* 👇 Add the video player right under gloss text */}
+              <div style={{marginTop:16}}>
+              <GlossVideoPlayer files={gloss.videos ?? []} delayMs={800} />
+                {(gloss.missing?.length ?? 0) > 0 && (
+                  <div className="small" style={{ marginTop: 8, color: "#fca5a5" }}>
+                    Missing videos for: {gloss.missing.join(", ")}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="small">No gloss yet.</div>
           )}
-        </div>
+      </div>
 
         <div className="card">
           <div className="small">Analysis</div>
