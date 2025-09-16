@@ -1,4 +1,4 @@
-server/static/signs/**/*.mp4 filter=lfs diff=lfs merge=lfs -text
-server/static/signs/**/*.mov filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.mov filter=lfs diff=lfs merge=lfs -text
+server/static/signs/**/*.mp4 filter=lfs diff=lfs merge=lfs -text
+server/static/signs/**/*.mov filter=lfs diff=lfs merge=lfs -text
