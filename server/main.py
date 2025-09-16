@@ -2,7 +2,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 import pandas as pd
+import re
+import unicodedata
 
 # ---- Import your logic modules ----
 # Adjust function names after you confirm them in your files.
@@ -79,3 +82,5 @@ def similarity(req: SimilarityRequest):
         return {"query": req.query, "results": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+app.mount("/videos", StaticFiles(directory="ASL_LEX_MP4"), name="videos")
