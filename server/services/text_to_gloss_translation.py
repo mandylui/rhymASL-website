@@ -5,19 +5,16 @@
 This module provides the text to gloss translation system using gpt-3.5 turbo.
 """
 from openai import OpenAI
+from dotenv import load_dotenv
+import os
 import pandas as pd
 import contractions
 from num2words import num2words
 import re
 
-# apikey = 'sk-proj-kBvz6ICORomCvv3DJmk6T3BlbkFJCEaXASLBQrR3RzMSCxYQ' # E
-# apikey="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" # Y
-# apikey_lab = 'sk-4rbtbz7FC_C1aXu_s0w_CQ'
-apikey="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" #Lab-Tips
 
-client = OpenAI(
-    api_key=apikey,
-)
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def gpt_run(prompt_system: str, prompt_user: str):

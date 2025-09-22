@@ -9,13 +9,17 @@ from sklearn.metrics.pairwise import cosine_similarity
 import warnings
 from transformers import logging
 from openai import OpenAI
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Suppress warnings about uninitialized weights
 warnings.filterwarnings("ignore", category=FutureWarning, module="huggingface_hub.file_download")
 warnings.filterwarnings("ignore", message="Some weights of the model checkpoint")
 logging.set_verbosity_error()
 
-client = OpenAI(api_key="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") #Lab-Tips
 
 name_df = pd.read_csv('data/name.csv')
 name_set = set(name_df['Name'].str.lower())
