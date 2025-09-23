@@ -6,4 +6,8 @@ export type AnalyzeResp = { input: string; gloss_tokens: string[]; entry_ids: st
 
 export const callGloss   = (text: string) => API.post("/gloss",   { text }).then(r => r.data as GlossResp);
 export const callAnalyze = (text: string) => API.post("/analyze", { text }).then(r => r.data as AnalyzeResp);
-export const callImage = (text: string) => API.post("/image", { text }).then(r => r.data as { url: string });
+export async function callImage(prompt: string) {
+    const r = await API.post("/image", { prompt });
+    return r.data;
+  }
+  

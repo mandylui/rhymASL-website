@@ -25,6 +25,19 @@ export default function App() {
     finally { setLoading(""); }
   };
 
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+const doImage = async () => {
+  setErr(null); setImageUrl(null);
+  try {
+    const res = await callImage(text.trim());
+    setImageUrl(res.url);
+  } catch (e:any) {
+    setErr(e?.message || "Image failed");
+  }
+};
+
+
   return (
     <div className="app">
       {/* Sidebar (Streamlit-style controls) */}
@@ -41,7 +54,18 @@ export default function App() {
           <button className="btn secondary" disabled={!text || !!loading} onClick={doAnalyze}>
             {loading==="analyze" ? "Analyzing…" : "Analyze"}
           </button>
+          <button className="btn secondary" disabled={!text || !!loading} onClick={doImage}>
+  Generate Image
+</button>
+
         </div>
+        {imageUrl && (
+          <div className="card">
+            <div className="small">Generated Image</div>
+            <img src={imageUrl} alt="AI generated" style={{marginTop:10, maxWidth:"100%"}} />
+          </div>
+        )}
+
 
         <div className="label">Demo images</div>
         <div className="row">

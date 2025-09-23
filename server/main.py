@@ -4,9 +4,16 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from pathlib import Path
 import re
+from openai import OpenAI
 
 BASE_DIR = Path(__file__).parent
 VIDEOS_DIR = BASE_DIR / "static" / "signs"
+
+app = FastAPI()
+client = OpenAI()
+
+class ImgReq(BaseModel):
+    prompt: str
 
 # Optional: your real translator if available
 _translate_to_gloss = None
@@ -58,6 +65,11 @@ def gloss(req: GlossRequest):
         return {"input": txt, "gloss": g, "videos": files, "missing": missing}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    @app.post("/image")
+    def gen_image(req: ImgReq):
+        img = client.images.generate(model="gpt-image-1", prompt=req.prompt, size="512x512")
+        return {"url": img.data[0].url}
 
 # Serve static videos
 if VIDEOS_DIR.exists():
