@@ -5,12 +5,13 @@ from pydantic import BaseModel
 from pathlib import Path
 import re
 from openai import OpenAI
+import os
 
 BASE_DIR = Path(__file__).parent
 VIDEOS_DIR = BASE_DIR / "static" / "signs"
 
 app = FastAPI()
-client = OpenAI()
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 class ImgReq(BaseModel):
     prompt: str
@@ -66,10 +67,10 @@ def gloss(req: GlossRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-    @app.post("/image")
-    def gen_image(req: ImgReq):
-        img = client.images.generate(model="gpt-image-1", prompt=req.prompt, size="512x512")
-        return {"url": img.data[0].url}
+@app.post("/image")
+def gen_image(req: ImgReq):
+    img = client.images.generate(model="gpt-image-1", prompt=req.prompt, size="1024x1024")
+    return {"url": img.data[0].url}
 
 # Serve static videos
 if VIDEOS_DIR.exists():
