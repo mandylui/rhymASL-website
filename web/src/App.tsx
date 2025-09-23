@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./styles.css";
-import { callGloss, callAnalyze } from "./lib/api";
+import { callGloss, callAnalyze, callImage } from "./lib/api"; 
 import type { GlossResp, AnalyzeResp } from "./lib/api";
 import GlossVideoPlayer from "./GlossVideoPlayer";
 
