@@ -1,141 +1,170 @@
 import { useState } from "react";
 import "./styles.css";
-import { callGloss, callAnalyze, callImage } from "./lib/api"; 
-import type { GlossResp, AnalyzeResp } from "./lib/api";
+import { callGloss, callImage } from "./lib/api";
+import type { GlossResp } from "./lib/api";
 import GlossVideoPlayer from "./GlossVideoPlayer";
 
 export default function App() {
   const [text, setText] = useState("");
   const [gloss, setGloss] = useState<GlossResp | null>(null);
-  const [analysis, setAnalysis] = useState<AnalyzeResp | null>(null);
-  const [loading, setLoading] = useState<"" | "gloss" | "analyze">("");
+  const [loading, setLoading] = useState<"" | "gloss">("");
   const [err, setErr] = useState<string | null>(null);
   const [showPics, setShowPics] = useState(true);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [selectedImg, setSelectedImg] = useState<string | null>(null);
 
   const doGloss = async () => {
-    setErr(null); setLoading("gloss"); setGloss(null);
-    try { setGloss(await callGloss(text.trim())); } 
-    catch (e:any){ setErr(e?.response?.data?.detail || "Gloss failed"); } 
-    finally { setLoading(""); }
+    setErr(null);
+    setLoading("gloss");
+    setGloss(null);
+    try {
+      const g = await callGloss(text.trim());
+      setGloss(g);
+    } catch (e: any) {
+      setErr(e?.response?.data?.detail || "Gloss failed");
+    } finally {
+      setLoading("");
+    }
   };
-  const doAnalyze = async () => {
-    setErr(null); setLoading("analyze"); setAnalysis(null);
-    try { setAnalysis(await callAnalyze(text.trim())); } 
-    catch (e:any){ setErr(e?.response?.data?.detail || "Analyze failed"); } 
-    finally { setLoading(""); }
+
+  const doImage = async () => {
+    setErr(null);
+    setImageUrl(null);
+    try {
+      const res = await callImage(text.trim());
+      setImageUrl(res.url);
+    } catch (e: any) {
+      setErr(e?.message || "Image failed");
+    }
   };
-
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-
-const doImage = async () => {
-  setErr(null); setImageUrl(null);
-  try {
-    const res = await callImage(text.trim());
-    setImageUrl(res.url);
-  } catch (e:any) {
-    setErr(e?.message || "Image failed");
-  }
-};
-
 
   return (
     <div className="app">
-      {/* Sidebar (Streamlit-style controls) */}
-      <aside className="sidebar">
-        <div className="header">rhymASL</div>
+      {/* Top bar */}
+      <div className="topbar">
+        <div className="brand">
+          <span>rhymASL</span>
+          <span className="badge">demo</span>
+        </div>
+      </div>
 
-        <div className="label">Sentence</div>
-        <textarea className="textarea" placeholder='e.g., "call silly dog"' value={text} onChange={e=>setText(e.target.value)} />
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="header">Create Your Own Story</div>
+
+        <textarea
+          className="textarea"
+          placeholder='Enter your story here... (e.g., "call silly dog")'
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
 
         <div className="row">
           <button className="btn" disabled={!text || !!loading} onClick={doGloss}>
-            {loading==="gloss" ? "Translating…" : "Translate"}
+            {loading === "gloss" ? <span className="spinner" /> : "🔤"}
+            {loading === "gloss" ? "Translating…" : "Translate"}
           </button>
-          <button className="btn secondary" disabled={!text || !!loading} onClick={doAnalyze}>
-            {loading==="analyze" ? "Analyzing…" : "Analyze"}
-          </button>
-          <button className="btn secondary" disabled={!text || !!loading} onClick={doImage}>
-  Generate Image
-</button>
 
+          <button className="btn secondary" disabled={!text || !!loading} onClick={doImage}>
+            🖼️ Generate Image
+          </button>
         </div>
+
         {imageUrl && (
-          <div className="card">
-            <div className="small">Generated Image</div>
-            <img src={imageUrl} alt="AI generated" style={{marginTop:10, maxWidth:"100%"}} />
+          <div className="card" style={{ marginTop: 12 }}>
+            <div className="section-head">
+              <div className="small">Generated Image</div>
+              <div className="status">
+                <span className="dot ok" /> done
+              </div>
+            </div>
+            <img className="genimg" src={imageUrl} alt="AI generated" />
           </div>
         )}
 
-
-        <div className="label">Demo images</div>
+        <div className="label" style={{ marginTop: 14 }}>
+          Demo images
+        </div>
         <div className="row">
-          <button className="btn secondary" onClick={()=>setShowPics(s=>!s)}>{showPics ? "Hide" : "Show"}</button>
+          <button className="btn ghost" onClick={() => setShowPics((s) => !s)}>
+            {showPics ? "Hide" : "Show"}
+          </button>
         </div>
 
-        {err && <p style={{color:"#fecaca", marginTop:10}}>{err}</p>}
-        <p className="small" style={{marginTop:14}}>API: {import.meta.env.VITE_API_BASE || "http://localhost:8000"}</p>
+        {err && (
+          <p className="small warn-text" style={{ marginTop: 10 }}>
+            {err}
+          </p>
+        )}
+
+        <p className="small" style={{ marginTop: 14 }}>
+          API: {import.meta.env.VITE_API_BASE || "http://localhost:8000"}
+        </p>
       </aside>
 
-      {/* Main content (results) */}
+      {/* Main content */}
       <main className="main">
+        {/* Gloss card */}
         <div className="card">
-          <div className="small">Gloss</div>
-          {gloss ? (
-            <div style={{marginTop:8}}>
-              <div className="small">Input</div>
-              <div style={{margin:"4px 0 10px"}}>{gloss.input}</div>
-              <div className="small">ASL Gloss</div>
-              <div style={{fontWeight:800, fontSize:18}}>{gloss.gloss}</div>
+          <div className="section-head">
+            <div className="status">
+              <span className={`dot ${gloss ? "ok" : "warn"}`} />
+              {gloss ? "Ready" : "No Result"}
+            </div>
+          </div>
 
-              {/* 👇 Add the video player right under gloss text */}
-              <div style={{marginTop:16}}>
-              <GlossVideoPlayer files={gloss.videos ?? []} delayMs={800} />
-                {(gloss.missing?.length ?? 0) > 0 && (
-                  <div className="small" style={{ marginTop: 8, color: "#fca5a5" }}>
-                    Missing videos for: {gloss.missing.join(", ")}
-                  </div>
-                )}
+          {gloss ? (
+            <div style={{ marginTop: 8 }}>
+              <div className="small">Story:</div>
+              <div className="story-text">{gloss.input}</div>
+
+              <div className="small">ASL Gloss</div>
+              <div className="story-text" style={{ fontWeight: 800, fontSize: 18 }}>{gloss.gloss}</div>
+
+              {/* Reserved space for videos so layout doesn't jump */}
+              <div className="gloss-video-slot">
+              <div className="video-heading">Playing Full Story...</div>
+                <GlossVideoPlayer files={gloss.videos ?? []} delayMs={800} />
               </div>
+
+              {(gloss.missing?.length ?? 0) > 0 && (
+                <div className="small warn-text" style={{ marginTop: 8 }}>
+                  Missing videos for: {gloss.missing.join(", ")}
+                </div>
+              )}
             </div>
           ) : (
-            <div className="small">No gloss yet.</div>
-          )}
-      </div>
-
-        <div className="card">
-          <div className="small">Analysis</div>
-          {analysis ? (
             <>
-              <div style={{marginTop:8}} className="small">Tokens</div>
-              <div style={{marginBottom:8}}>{analysis.gloss_tokens.join(" · ")}</div>
-              <table className="table">
-                <thead><tr><th>#</th><th>Token</th><th>Entry</th><th>Lemma</th></tr></thead>
-                <tbody>
-                  {analysis.entry_ids.map((id, i) => (
-                    <tr key={i}>
-                      <td className="small">{i+1}</td>
-                      <td>{analysis.gloss_tokens[i] ?? "-"}</td>
-                      <td>{id ?? "-"}</td>
-                      <td>{analysis.lemmas[i] ?? "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="small">No gloss yet.</div>
+              <div className="gloss-video-slot">
+                <div className="skeleton" />
+              </div>
             </>
-          ) : (
-            <div className="small">No analysis yet.</div>
           )}
         </div>
 
+        {/* Demo images */}
         {showPics && (
           <div className="card">
-            <div className="small">Demo Images</div>
-            <div className="preview" style={{marginTop:10}}>
-              <img src="/bear.jpg" alt="bear"/>
-              <img src="/call_silly_dog.jpg" alt="dog"/>
-              <img src="/bird_call_dog.jpg" alt="bird dog"/>
-              <img src="/dirty_pig.jpg" alt="pig"/>
+            <div className="section-head">
+              <div className="small">Demo Images</div>
+              <div className="status"><span className="dot ok" /> Samples</div>
             </div>
+            <div className="preview" style={{ marginTop: 10 }}>
+              {["/bear.jpg","/call_silly_dog.jpg","/bird_call_dog.jpg","/dirty_pig.jpg"].map(src=>(
+                <div key={src} className="img-wrap" onClick={()=>setSelectedImg(src)}>
+                  <img src={src} alt="" />
+            </div>
+          ))}
+        </div>
+
+          </div>
+        )}
+
+        {selectedImg && (
+          <div className="lightbox" onClick={()=>setSelectedImg(null)}>
+            <span className="close">×</span>
+            <img src={selectedImg} alt="enlarged" />
           </div>
         )}
       </main>
