@@ -16,7 +16,6 @@ client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 class ImgReq(BaseModel):
     prompt: str
 
-# Optional: your real translator if available
 _translate_to_gloss = None
 try:
     from services.text_to_gloss_translation import translate_to_gloss as _translate_to_gloss

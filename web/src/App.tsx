@@ -38,6 +38,7 @@ export default function App() {
     }
   };
 
+  
   return (
     <div className="app">
       {/* Top bar */}
@@ -54,7 +55,7 @@ export default function App() {
 
         <textarea
           className="textarea"
-          placeholder='Enter your story here... (e.g., "call silly dog")'
+          placeholder='Enter your story here… (e.g., "call silly dog")'
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
@@ -73,10 +74,8 @@ export default function App() {
         {imageUrl && (
           <div className="card" style={{ marginTop: 12 }}>
             <div className="section-head">
-              <div className="small">Generated Image</div>
-              <div className="status">
-                <span className="dot ok" /> done
-              </div>
+              <div className="section-title">Generated Image</div>
+              <div className="status"><span className="dot ok" /> done</div>
             </div>
             <img className="genimg" src={imageUrl} alt="AI generated" />
           </div>
@@ -96,70 +95,64 @@ export default function App() {
             {err}
           </p>
         )}
-
-        <p className="small" style={{ marginTop: 14 }}>
-          API: {import.meta.env.VITE_API_BASE || "http://localhost:8000"}
-        </p>
       </aside>
 
       {/* Main content */}
       <main className="main">
-        {/* Gloss card */}
-        <div className="card">
-          <div className="section-head">
-            <div className="status">
-              <span className={`dot ${gloss ? "ok" : "warn"}`} />
-              {gloss ? "Ready" : "No Result"}
-            </div>
-          </div>
-
-          {gloss ? (
-            <div style={{ marginTop: 8 }}>
-              <div className="small">Story:</div>
-              <div className="story-text">{gloss.input}</div>
-
-              <div className="small">ASL Gloss</div>
-              <div className="story-text" style={{ fontWeight: 800, fontSize: 18 }}>{gloss.gloss}</div>
-
-              {/* Reserved space for videos so layout doesn't jump */}
-              <div className="gloss-video-slot">
-              <div className="video-heading">Playing Full Story...</div>
-                <GlossVideoPlayer files={gloss.videos ?? []} delayMs={800} />
-              </div>
-
-              {(gloss.missing?.length ?? 0) > 0 && (
-                <div className="small warn-text" style={{ marginTop: 8 }}>
-                  Missing videos for: {gloss.missing.join(", ")}
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="small">No gloss yet.</div>
-              <div className="gloss-video-slot">
-                <div className="skeleton" />
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Demo images */}
-        {showPics && (
+        <div className="container">
+          {/* Gloss card */}
           <div className="card">
             <div className="section-head">
-              <div className="small">Demo Images</div>
-              <div className="status"><span className="dot ok" /> Samples</div>
+              <div className="section-title-asl-result">ASL Result</div>
+              <div className="status">
+                <span className={`dot ${gloss ? "ok" : "warn"}`} />
+                {gloss ? "Ready" : "No Result"}
+              </div>
             </div>
-            <div className="preview" style={{ marginTop: 10 }}>
-              {["/bear.jpg","/call_silly_dog.jpg","/bird_call_dog.jpg","/dirty_pig.jpg"].map(src=>(
-                <div key={src} className="img-wrap" onClick={()=>setSelectedImg(src)}>
-                  <img src={src} alt="" />
-            </div>
-          ))}
-        </div>
 
+            {gloss ? (
+              <div style={{ marginTop: 8 }}>
+                <div className="eyebrow">Story</div>
+                <div className="story-text">{gloss.input}</div>
+
+                <div className="eyebrow">ASL Gloss</div>
+                <div className="story-text gloss-text">{gloss.gloss}</div>
+
+                <div className="gloss-video-slot">
+                  <div className="video-heading">Playing Full Story…</div>
+                  <GlossVideoPlayer files={gloss.videos ?? []} delayMs={800} />
+                </div>
+
+                {(gloss.missing?.length ?? 0) > 0 && (
+                  <div className="small warn-text" style={{ marginTop: 8 }}>
+                    Missing videos for: {gloss.missing.join(", ")}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="empty">
+                <div className="skeleton shimmer" />
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Demo images */}
+          {showPics && (
+            <div className="card-demo">
+              <div className="section-head">
+                <div className="section-title">Demo Images</div>
+                <div className="status"><span className="dot ok" /> Samples</div>
+              </div>
+              <div className="preview" style={{ marginTop: 10 }}>
+                {["/bear.jpg","/call_silly_dog.jpg","/bird_call_dog.jpg","/dirty_pig.jpg"].map(src=>(
+                  <div key={src} className="img-wrap" onClick={()=>setSelectedImg(src)}>
+                    <img src={src} alt="" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {selectedImg && (
           <div className="lightbox" onClick={()=>setSelectedImg(null)}>
